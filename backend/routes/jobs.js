@@ -58,13 +58,13 @@ router.post('/', async (req, res) => {
 
 // PUT /api/jobs/:id - Update job (admin, invoice fields)
 router.put('/:id', async (req, res) => {
-  const { invoice_raised, invoice_amount, payment_received, status } = req.body;
+  const { invoice_raised, invoice_amount, payment_received, status, type_of_job } = req.body;
   console.log("Update request body:", req.body);
   try {
-    const params = [invoice_raised, invoice_amount, payment_received, status, req.params.id];
+    const params = [invoice_raised, invoice_amount, payment_received, status, type_of_job, req.params.id];
     console.log("SQL update params:", params);
     await db.query(
-      'UPDATE job SET invoice_raised = ?, invoice_amount = ?, payment_received = ?, status = ? WHERE id = ?',
+      'UPDATE job SET invoice_raised = ?, invoice_amount = ?, payment_received = ?, status = ?, type_of_job = ? WHERE id = ?',
       params
     );
     res.json({ success: true });

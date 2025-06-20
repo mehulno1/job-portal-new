@@ -10,16 +10,37 @@ import { useNavigate } from "react-router-dom";
 const AdminDashboard = () => {
   const [jobs, setJobs] = useState([]);
   const [editJob, setEditJob] = useState(null);
-  const [invoiceFields, setInvoiceFields] = useState({ invoice_raised: "", invoice_amount: "", payment_received: "", status: "" });
+  const [invoiceFields, setInvoiceFields] = useState({ invoice_raised: "", invoice_amount: "", payment_received: "", status: "", type_of_job: "" });
   const [search, setSearch] = useState("");
   const [status, setStatus] = useState("");
+  const [typeOptions, setTypeOptions] = useState([]);
   const navigate = useNavigate();
 
-  useEffect(() => { fetchJobs(); }, []);
+  const statusOptions = [
+    "New",
+    "In-Progress",
+    "Completed",
+    "On-Hold",
+    "Cancelled"
+  ];
+
+  useEffect(() => {
+    fetchJobs();
+    fetchTypeOptions();
+  }, []);
 
   const fetchJobs = async () => {
     const res = await axios.get("http://localhost:5000/api/jobs");
     setJobs(res.data);
+  };
+
+  const fetchTypeOptions = async () => {
+    try {
+      const res = await axios.get("http://localhost:5000/api/codes");
+      setTypeOptions(res.data);
+    } catch {
+      setTypeOptions([]);
+    }
   };
 
   const handleEdit = (job) => {
@@ -28,7 +49,8 @@ const AdminDashboard = () => {
       invoice_raised: job.invoice_raised ?? 0,
       invoice_amount: job.invoice_amount ?? 0,
       payment_received: job.payment_received ?? 0,
-      status: job.status ?? "New"
+      status: job.status ?? "New",
+      type_of_job: job.type_of_job ?? ""
     });
   };
 
@@ -38,7 +60,8 @@ const AdminDashboard = () => {
         invoice_raised: Number(invoiceFields.invoice_raised),
         invoice_amount: Number(invoiceFields.invoice_amount),
         payment_received: Number(invoiceFields.payment_received),
-        status: invoiceFields.status || "New"
+        status: invoiceFields.status || "New",
+        type_of_job: invoiceFields.type_of_job
       };
       console.log("Sending update payload:", payload);
       const response = await axios.put(`http://localhost:5000/api/jobs/${editJob.id}`, payload);
@@ -63,10 +86,11 @@ const AdminDashboard = () => {
     navigate("/");
   };
 
+  const normalizeStatus = s => (s || '').toLowerCase().replace(/[\s_]+/g, '-');
   const filteredJobs = jobs.filter(job =>
     (job.client_name?.toLowerCase().includes(search.toLowerCase()) ||
       job.job_id?.toLowerCase().includes(search.toLowerCase())) &&
-    (status ? job.status === status : true)
+    (status ? normalizeStatus(job.status) === normalizeStatus(status) : true)
   );
 
   return (
@@ -91,10 +115,10 @@ const AdminDashboard = () => {
           displayEmpty
           size="small"
         >
-          <MenuItem value="">All Statuses</MenuItem>
-          <MenuItem value="New">New</MenuItem>
-          <MenuItem value="In Progress">In Progress</MenuItem>
-          <MenuItem value="Completed">Completed</MenuItem>
+          <MenuItem value="">All</MenuItem>
+          {statusOptions.map((option, idx) => (
+            <MenuItem key={idx} value={option}>{option.replace(/-/g, ' ')}</MenuItem>
+          ))}
         </Select>
         <Button variant="outlined" onClick={handleExport} sx={{ ml: 'auto' }}>
           Export to Excel
@@ -120,24 +144,27 @@ const AdminDashboard = () => {
               </TableRow>
             </TableHead>
             <TableBody>
-              {filteredJobs.map(job => (
-                <TableRow key={job.id}>
-                  <TableCell>{job.created_at ? job.created_at.slice(0, 10) : ''}</TableCell>
-                  <TableCell>{job.job_id}</TableCell>
-                  <TableCell>{job.job_received_date?.slice(0, 10)}</TableCell>
-                  <TableCell>{job.client_name}</TableCell>
-                  <TableCell>{job.mode_received}</TableCell>
-                  <TableCell>{job.job_description}</TableCell>
-                  <TableCell>{job.type_of_job}</TableCell>
-                  <TableCell>{job.status}</TableCell>
-                  <TableCell>{job.invoice_raised ? "Yes" : "No"}</TableCell>
-                  <TableCell>{job.invoice_amount}</TableCell>
-                  <TableCell>{job.payment_received ? "Yes" : "No"}</TableCell>
-                  <TableCell>
-                    <Button size="small" variant="outlined" onClick={() => handleEdit(job)}>Edit</Button>
-                  </TableCell>
-                </TableRow>
-              ))}
+              {filteredJobs.map(job => {
+                console.log('Job status:', job.status);
+                return (
+                  <TableRow key={job.id}>
+                    <TableCell>{job.created_at ? job.created_at.slice(0, 10) : ''}</TableCell>
+                    <TableCell>{job.job_id}</TableCell>
+                    <TableCell>{job.job_received_date?.slice(0, 10)}</TableCell>
+                    <TableCell>{job.client_name}</TableCell>
+                    <TableCell>{job.mode_received}</TableCell>
+                    <TableCell>{job.job_description}</TableCell>
+                    <TableCell>{job.type_of_job}</TableCell>
+                    <TableCell>{job.status.replace(/-/g, ' ')}</TableCell>
+                    <TableCell>{job.invoice_raised ? "Yes" : "No"}</TableCell>
+                    <TableCell>{job.invoice_amount}</TableCell>
+                    <TableCell>{job.payment_received ? "Yes" : "No"}</TableCell>
+                    <TableCell>
+                      <Button size="small" variant="outlined" onClick={() => handleEdit(job)}>Edit</Button>
+                    </TableCell>
+                  </TableRow>
+                );
+              })}
             </TableBody>
           </Table>
         </TableContainer>
@@ -176,6 +203,33 @@ const AdminDashboard = () => {
           >
             <MenuItem value={1}>Yes</MenuItem>
             <MenuItem value={0}>No</MenuItem>
+          </TextField>
+          <TextField
+            label="Type of Job"
+            select
+            value={invoiceFields.type_of_job}
+            onChange={e => setInvoiceFields(f => ({ ...f, type_of_job: e.target.value }))}
+            fullWidth
+            margin="normal"
+          >
+            <MenuItem value="">Select Type of Job</MenuItem>
+            {typeOptions.map((option, idx) => (
+              <MenuItem key={idx} value={option.label || option.item || option.type_of_job}>
+                {option.label || option.item || option.type_of_job}
+              </MenuItem>
+            ))}
+          </TextField>
+          <TextField
+            label="Status"
+            select
+            value={invoiceFields.status}
+            onChange={e => setInvoiceFields(f => ({ ...f, status: e.target.value }))}
+            fullWidth
+            margin="normal"
+          >
+            {statusOptions.map((option, idx) => (
+              <MenuItem key={idx} value={option}>{option.replace(/-/g, ' ')}</MenuItem>
+            ))}
           </TextField>
         </DialogContent>
         <DialogActions>

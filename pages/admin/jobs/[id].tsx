@@ -243,6 +243,18 @@ export default function AdminJobEdit() {
             />
           </div>
 
+          <div className={styles.inputGroup}>
+            <label htmlFor="type_of_job">Type of Job</label>
+            <input
+              id="type_of_job"
+              type="text"
+              name="type_of_job"
+              value={form.type_of_job}
+              onChange={handleChange}
+              required
+            />
+          </div>
+
           <button type="submit" className={styles.submitButton}>
             Save Updates
           </button>

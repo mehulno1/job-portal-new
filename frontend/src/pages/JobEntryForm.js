@@ -23,10 +23,6 @@ const modeOptions = [
   "Email", "Phone", "WhatsApp", "Physical Documents", "Other"
 ];
 
-const assignees = [
-  "Aanya Patel", "Rohan Mehta", "Priya Shah", "Karan Desai", "Sneha Joshi"
-];
-
 const JobEntryForm = () => {
   const [form, setForm] = useState({
     client_name: "",
@@ -44,6 +40,7 @@ const JobEntryForm = () => {
   const [success, setSuccess] = useState("");
   const [loading, setLoading] = useState(false);
   const [validationErrors, setValidationErrors] = useState({});
+  const [userOptions, setUserOptions] = useState([]);
   const navigate = useNavigate();
   const location = useLocation();
   const user = location.state?.user;
@@ -142,6 +139,7 @@ const JobEntryForm = () => {
       return;
     }
     fetchTypes();
+    fetchUsers();
     // eslint-disable-next-line
   }, []);
 
@@ -151,6 +149,17 @@ const JobEntryForm = () => {
       setTypeOptions(res.data);
     } catch {
       setTypeOptions([]);
+    }
+  };
+
+  const fetchUsers = async () => {
+    try {
+      const res = await axios.get("http://localhost:3001/api/users");
+      setUserOptions(res.data);
+      console.log("Fetched users:", res.data);
+    } catch {
+      setUserOptions([]);
+      console.log("Failed to fetch users");
     }
   };
 
@@ -329,9 +338,21 @@ const JobEntryForm = () => {
               </TextField>
             </Grid>
             <Grid item xs={12}>
-              <TextField select label="Assigned To" name="assigned_to" value={form.assigned_to} onChange={handleChange} InputLabelProps={{ shrink: true }} fullWidth required error={!!validationErrors.assigned_to} helperText={validationErrors.assigned_to} sx={{ minWidth: 300 }}>
-                {assignees.map((name) => (
-                  <MenuItem key={name} value={name}>{name}</MenuItem>
+              <TextField
+                select
+                label="Assigned To"
+                name="assigned_to"
+                value={form.assigned_to}
+                onChange={handleChange}
+                fullWidth
+                required
+                error={!!validationErrors.assigned_to}
+                helperText={validationErrors.assigned_to}
+                sx={{ minWidth: 300 }}
+              >
+                <MenuItem value="">Select Employee</MenuItem>
+                {userOptions.map((user) => (
+                  <MenuItem key={user.id} value={user.name}>{user.name}</MenuItem>
                 ))}
               </TextField>
             </Grid>
