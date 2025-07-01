@@ -4,11 +4,11 @@ import mysql from 'mysql2/promise'
 
 // Configure your MySQL connection (update with your credentials)
 const dbConfig = {
-  host: '127.0.0.1',
+  host: 'localhost',
   user: 'dbusr_dcjobs',
   password: 'dc@123',
   database: 'job_portal',
-  port: 3307
+  port: 3306
 }
 
 export default async function handler(

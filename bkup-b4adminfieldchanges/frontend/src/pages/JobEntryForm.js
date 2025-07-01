@@ -17,7 +17,11 @@ import {
   useTheme,
   alpha
 } from "@mui/material";
-import { Person, AddCircleOutline, ArrowBack } from '@mui/icons-material';
+import { Email, Phone, Person, AddCircleOutline, ArrowBack } from '@mui/icons-material';
+
+const modeOptions = [
+  "Email", "Phone", "WhatsApp", "Physical Documents", "Other"
+];
 
 const JobEntryForm = () => {
   const [form, setForm] = useState({
@@ -173,6 +177,10 @@ const JobEntryForm = () => {
   const validateForm = () => {
     const errors = {};
     if (!form.client_name.trim()) errors.client_name = "Client name is required";
+    if (!form.client_email.trim()) errors.client_email = "Client email is required";
+    else if (!/\S+@\S+\.\S+/.test(form.client_email)) errors.client_email = "Invalid email format";
+    if (!form.client_phone.trim()) errors.client_phone = "Client phone is required";
+    if (!form.mode_received) errors.mode_received = "Mode received is required";
     if (!form.type_of_job) errors.type_of_job = "Type of job is required";
     if (!form.assigned_to) errors.assigned_to = "Assigned to is required";
     if (!form.job_description.trim()) errors.job_description = "Job description is required";
@@ -202,13 +210,7 @@ const JobEntryForm = () => {
     try {
       await axios.post(`${process.env.REACT_APP_API_URL}/api/jobs`, form);
       setSuccess("Job created successfully!");
-      setTimeout(() => {
-        if (user && user.role === "admin") {
-          navigate("/admin");
-        } else {
-          navigate("/user", { state: { user } });
-        }
-      }, 1500);
+      setTimeout(() => navigate("/user", { state: { user } }), 1500);
     } catch (err) {
       setError(err.response?.data?.error || "Failed to create job");
     } finally {
@@ -281,6 +283,48 @@ const JobEntryForm = () => {
                 }}
               />
             </Grid>
+            
+            <Grid item xs={12} md={6}>
+              <TextField
+                label="Client Email"
+                name="client_email"
+                value={form.client_email}
+                onChange={handleChange}
+                fullWidth
+                required
+                error={!!validationErrors.client_email}
+                helperText={validationErrors.client_email}
+                sx={formStyles.field}
+                InputProps={{
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <Email color="primary" />
+                    </InputAdornment>
+                  ),
+                }}
+              />
+            </Grid>
+
+            <Grid item xs={12} md={6}>
+              <TextField
+                label="Client Phone"
+                name="client_phone"
+                value={form.client_phone}
+                onChange={handleChange}
+                fullWidth
+                required
+                error={!!validationErrors.client_phone}
+                helperText={validationErrors.client_phone}
+                sx={formStyles.field}
+                InputProps={{
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <Phone color="primary" />
+                    </InputAdornment>
+                  ),
+                }}
+              />
+            </Grid>
           </Grid>
 
           <Typography variant="h6" sx={formStyles.sectionTitle}>
@@ -289,6 +333,13 @@ const JobEntryForm = () => {
           <Grid container spacing={2}>
             <Grid item xs={12} sm={6}>
               <TextField label="Job Received Date" name="job_received_date" type="date" value={form.job_received_date} onChange={handleChange} InputLabelProps={{ shrink: true }} fullWidth required sx={{ minWidth: 300 }}/>
+            </Grid>
+            <Grid item xs={12} sm={6}>
+              <TextField select label="Mode Received" name="mode_received" value={form.mode_received} onChange={handleChange} InputLabelProps={{ shrink: true }} fullWidth required error={!!validationErrors.mode_received} helperText={validationErrors.mode_received} sx={{ minWidth: 300 }}>
+                {modeOptions.map((option) => (
+                  <MenuItem key={option} value={option}>{option}</MenuItem>
+                ))}
+              </TextField>
             </Grid>
             <Grid item xs={12} sm={6}>
               <TextField select label="Type of Job" name="type_of_job" value={form.type_of_job} onChange={handleChange} InputLabelProps={{ shrink: true }} fullWidth required error={!!validationErrors.type_of_job} helperText={validationErrors.type_of_job} sx={{ minWidth: 300 }}>

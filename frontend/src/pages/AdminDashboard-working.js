@@ -14,8 +14,6 @@ const AdminDashboard = () => {
   const [search, setSearch] = useState("");
   const [status, setStatus] = useState("");
   const [typeOptions, setTypeOptions] = useState([]);
-  const [sortBy, setSortBy] = useState('created_at');
-  const [sortDirection, setSortDirection] = useState('desc');
   const navigate = useNavigate();
 
   const statusOptions = [
@@ -92,45 +90,12 @@ const AdminDashboard = () => {
     navigate("/");
   };
 
-  const handleDelete = async (jobId) => {
-    if (!window.confirm('Are you sure you want to delete this job?')) return;
-    try {
-      await axios.delete(`${process.env.REACT_APP_API_URL}/api/jobs/${jobId}`);
-      fetchJobs();
-    } catch (err) {
-      alert('Failed to delete job');
-    }
-  };
-
   const normalizeStatus = s => (s || '').toLowerCase().replace(/[\s_]+/g, '-');
   const filteredJobs = jobs.filter(job =>
     (job.client_name?.toLowerCase().includes(search.toLowerCase()) ||
       job.job_id?.toLowerCase().includes(search.toLowerCase())) &&
     (status ? normalizeStatus(job.status) === normalizeStatus(status) : true)
   );
-
-  const handleSort = (column) => {
-    if (sortBy === column) {
-      setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
-    } else {
-      setSortBy(column);
-      setSortDirection('asc');
-    }
-  };
-
-  const sortedJobs = [...filteredJobs].sort((a, b) => {
-    let aValue = a[sortBy];
-    let bValue = b[sortBy];
-    if (aValue === undefined || aValue === null) aValue = '';
-    if (bValue === undefined || bValue === null) bValue = '';
-    if (typeof aValue === 'string' && typeof bValue === 'string') {
-      aValue = aValue.toLowerCase();
-      bValue = bValue.toLowerCase();
-    }
-    if (aValue < bValue) return sortDirection === 'asc' ? -1 : 1;
-    if (aValue > bValue) return sortDirection === 'asc' ? 1 : -1;
-    return 0;
-  });
 
   return (
     <Container maxWidth="xl" sx={{ py: 4 }}>
@@ -168,34 +133,21 @@ const AdminDashboard = () => {
           <Table>
             <TableHead>
               <TableRow>
-                {[
-                  { label: 'Date', key: 'created_at' },
-                  { label: 'Job ID', key: 'job_id' },
-                  { label: 'Received Date', key: 'job_received_date' },
-                  { label: 'Client Name', key: 'client_name' },
-                  { label: 'Description', key: 'job_description' },
-                  { label: 'Type of Job', key: 'type_of_job' },
-                  { label: 'Status', key: 'status' },
-                  { label: 'Invoice Raised', key: 'invoice_raised' },
-                  { label: 'Invoice Amount', key: 'invoice_amount' },
-                  { label: 'Payment Received', key: 'payment_received' },
-                  { label: 'Actions', key: null }
-                ].map(col => (
-                  <TableCell
-                    key={col.key || col.label}
-                    onClick={col.key ? () => handleSort(col.key) : undefined}
-                    style={{ cursor: col.key ? 'pointer' : 'default', userSelect: 'none' }}
-                  >
-                    {col.label}
-                    {col.key && sortBy === col.key && (
-                      sortDirection === 'asc' ? ' ▲' : ' ▼'
-                    )}
-                  </TableCell>
-                ))}
+                <TableCell>Date</TableCell>
+                <TableCell>Job ID</TableCell>
+                <TableCell>Received Date</TableCell>
+                <TableCell>Client Name</TableCell>
+                <TableCell>Description</TableCell>
+                <TableCell>Type of Job</TableCell>
+                <TableCell>Status</TableCell>
+                <TableCell>Invoice Raised</TableCell>
+                <TableCell>Invoice Amount</TableCell>
+                <TableCell>Payment Received</TableCell>
+                <TableCell>Actions</TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
-              {sortedJobs.map(job => {
+              {filteredJobs.map(job => {
                 console.log('Job status:', job.status);
                 return (
                   <TableRow key={job.id}>
@@ -211,7 +163,6 @@ const AdminDashboard = () => {
                     <TableCell>{job.payment_received ? "Yes" : "No"}</TableCell>
                     <TableCell>
                       <Button size="small" variant="outlined" onClick={() => handleEdit(job)}>Edit</Button>
-                      <Button size="small" variant="outlined" color="error" sx={{ ml: 1 }} onClick={() => handleDelete(job.id)}>Delete</Button>
                     </TableCell>
                   </TableRow>
                 );

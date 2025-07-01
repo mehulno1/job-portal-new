@@ -21,25 +21,13 @@ router.post('/', async (req, res) => {
     job_description, type_of_job, assigned_to, target_completion_date
   } = req.body;
   try {
-    // Get the highest job_id number
-    const [rows] = await db.query(
-      "SELECT job_id FROM job WHERE job_id LIKE 'DC-%' ORDER BY CAST(SUBSTRING(job_id, 4) AS UNSIGNED) DESC LIMIT 1"
-    );
-    let newJobNumber = 1;
-    if (rows.length > 0) {
-      const lastJobId = rows[0].job_id; // e.g., 'DC-797'
-      const lastNumber = parseInt(lastJobId.split('-')[1], 10);
-      newJobNumber = lastNumber + 1;
-    }
-    const newJobId = `DC-${newJobNumber}`;
-
-    // Insert the job WITH job_id
+    // Insert the job WITHOUT job_id
     const [result] = await db.query(
       `INSERT INTO job (
         client_name, client_email, client_phone, job_received_date, mode_received,
         job_description, type_of_job, assigned_to, target_completion_date, status,
-        is_delivered, invoice_raised, payment_received, job_id
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        is_delivered, invoice_raised, payment_received
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         client_name,
         client_email,
@@ -53,12 +41,15 @@ router.post('/', async (req, res) => {
         'New',
         0,
         0,
-        0,
-        newJobId
+        0
       ]
     );
 
-    res.json({ success: true, job_id: newJobId });
+    // Now update the job_id for this row
+    const jobId = 'DC-' + result.insertId;
+    await db.query('UPDATE job SET job_id = ? WHERE id = ?', [jobId, result.insertId]);
+
+    res.json({ success: true, job_id: jobId });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Database error', details: err.message });
@@ -67,13 +58,13 @@ router.post('/', async (req, res) => {
 
 // PUT /api/jobs/:id - Update job (admin, invoice fields)
 router.put('/:id', async (req, res) => {
-  const { invoice_raised, invoice_amount, payment_received, status, type_of_job, job_id, job_received_date } = req.body;
+  const { invoice_raised, invoice_amount, payment_received, status, type_of_job } = req.body;
   console.log("Update request body:", req.body);
   try {
-    const params = [invoice_raised, invoice_amount, payment_received, status, type_of_job, job_id, job_received_date, req.params.id];
+    const params = [invoice_raised, invoice_amount, payment_received, status, type_of_job, req.params.id];
     console.log("SQL update params:", params);
     await db.query(
-      'UPDATE job SET invoice_raised = ?, invoice_amount = ?, payment_received = ?, status = ?, type_of_job = ?, job_id = ?, job_received_date = ? WHERE id = ?',
+      'UPDATE job SET invoice_raised = ?, invoice_amount = ?, payment_received = ?, status = ?, type_of_job = ? WHERE id = ?',
       params
     );
     res.json({ success: true });

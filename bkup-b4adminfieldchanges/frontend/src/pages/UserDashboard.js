@@ -67,6 +67,7 @@ const UserDashboard = () => {
                 <TableCell>Job Received Date</TableCell>
                 <TableCell>Job ID</TableCell>
                 <TableCell>Client Name</TableCell>
+                <TableCell>Mode Received</TableCell>
                 <TableCell>Job Description</TableCell>
                 <TableCell>Status</TableCell>
               </TableRow>
@@ -77,6 +78,7 @@ const UserDashboard = () => {
                   <TableCell>{job.job_received_date?.slice(0, 10)}</TableCell>
                   <TableCell>{job.job_id}</TableCell>
                   <TableCell>{job.client_name}</TableCell>
+                  <TableCell>{job.mode_received}</TableCell>
                   <TableCell>{job.job_description}</TableCell>
                   <TableCell>{job.status}</TableCell>
                 </TableRow>

@@ -31,7 +31,24 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     payment_received,
     payment_mode,
     payment_reference,
+    job_id,
+    job_received_date,
   } = req.body
+
+  console.log('Update body:', req.body);
+  const sqlParams = [
+    invoice_raised ? 1 : 0,
+    is_delivered ? 1 : 0,
+    invoice_number || null,
+    invoice_amount || null,
+    payment_received ? 1 : 0,
+    payment_mode || null,
+    payment_reference || null,
+    job_id || null,
+    job_received_date || null,
+    id,
+  ];
+  console.log('SQL update params:', sqlParams);
 
   try {
     const [result] = await pool.query(
@@ -43,18 +60,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         payment_received = ?,
         payment_mode = ?,
         payment_reference = ?,
+        job_id = ?,
+        job_received_date = ?,
         updated_at = CURRENT_TIMESTAMP(3)
       WHERE id = ?`,
-      [
-        invoice_raised ? 1 : 0,
-        is_delivered ? 1 : 0,
-        invoice_number || null,
-        invoice_amount || null,
-        payment_received ? 1 : 0,
-        payment_mode || null,
-        payment_reference || null,
-        id,
-      ]
+      sqlParams
     )
 
     return res.status(200).json({ message: 'Job updated successfully' })
