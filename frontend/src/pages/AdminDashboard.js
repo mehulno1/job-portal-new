@@ -3,19 +3,20 @@ import axios from "axios";
 import {
   Container, Typography, Paper, Table, TableBody, TableCell, TableContainer,
   TableHead, TableRow, TextField, Button, Box, Dialog, DialogTitle, DialogContent,
-  DialogActions, Select, MenuItem
+  DialogActions, Select, MenuItem, Snackbar, Alert
 } from "@mui/material";
 import { useNavigate } from "react-router-dom";
 
 const AdminDashboard = () => {
   const [jobs, setJobs] = useState([]);
   const [editJob, setEditJob] = useState(null);
-  const [invoiceFields, setInvoiceFields] = useState({ invoice_raised: "", invoice_amount: "", payment_received: "", status: "", type_of_job: "", job_id: "", job_received_date: "" });
+  const [invoiceFields, setInvoiceFields] = useState({ invoice_raised: "", invoice_amount: "", payment_received: "", status: "", type_of_job: "", job_id: "", job_received_date: "", client_name: "", job_description: "" });
   const [search, setSearch] = useState("");
   const [status, setStatus] = useState("");
   const [typeOptions, setTypeOptions] = useState([]);
   const [sortBy, setSortBy] = useState('created_at');
   const [sortDirection, setSortDirection] = useState('desc');
+  const [updateSuccess, setUpdateSuccess] = useState(false);
   const navigate = useNavigate();
 
   const statusOptions = [
@@ -54,7 +55,9 @@ const AdminDashboard = () => {
       status: job.status ?? "New",
       type_of_job: job.type_of_job ?? "",
       job_id: job.job_id ?? "",
-      job_received_date: job.job_received_date ? job.job_received_date.slice(0, 10) : ""
+      job_received_date: job.job_received_date ? job.job_received_date.slice(0, 10) : "",
+      client_name: job.client_name ?? "",
+      job_description: job.job_description ?? ""
     });
   };
 
@@ -67,13 +70,21 @@ const AdminDashboard = () => {
         status: invoiceFields.status || "New",
         type_of_job: invoiceFields.type_of_job,
         job_id: invoiceFields.job_id,
-        job_received_date: invoiceFields.job_received_date
+        job_received_date: invoiceFields.job_received_date,
+        client_name: invoiceFields.client_name,
+        job_description: invoiceFields.job_description
       };
       console.log("Sending update payload:", payload);
       const response = await axios.put(`${process.env.REACT_APP_API_URL}/api/jobs/${editJob.id}`, payload);
       console.log("Update response:", response.data);
+      
+      // Show success message
+      setUpdateSuccess(true);
+      setTimeout(() => setUpdateSuccess(false), 3000);
+      
+      // Close modal and refresh data
       setEditJob(null);
-      fetchJobs();
+      await fetchJobs(); // Wait for data to refresh
     } catch (err) {
       console.error("Update error:", err);
       alert("Failed to update job");
@@ -223,8 +234,24 @@ const AdminDashboard = () => {
 
       {/* Edit Modal */}
       <Dialog open={!!editJob} onClose={() => setEditJob(null)}>
-        <DialogTitle>Edit Invoice Fields</DialogTitle>
+        <DialogTitle>Edit Job Fields</DialogTitle>
         <DialogContent>
+          <TextField
+            label="Client Name"
+            value={invoiceFields.client_name}
+            onChange={e => setInvoiceFields(f => ({ ...f, client_name: e.target.value }))}
+            fullWidth
+            margin="normal"
+          />
+          <TextField
+            label="Job Description"
+            value={invoiceFields.job_description}
+            onChange={e => setInvoiceFields(f => ({ ...f, job_description: e.target.value }))}
+            fullWidth
+            margin="normal"
+            multiline
+            rows={3}
+          />
           <TextField
             label="Job ID"
             value={invoiceFields.job_id}
@@ -304,6 +331,18 @@ const AdminDashboard = () => {
           <Button onClick={handleSave} variant="contained">Save Updates</Button>
         </DialogActions>
       </Dialog>
+
+      {/* Success Notification */}
+      <Snackbar
+        open={updateSuccess}
+        autoHideDuration={3000}
+        onClose={() => setUpdateSuccess(false)}
+        anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
+      >
+        <Alert onClose={() => setUpdateSuccess(false)} severity="success" sx={{ width: '100%' }}>
+          Job updated successfully!
+        </Alert>
+      </Snackbar>
     </Container>
   );
 };

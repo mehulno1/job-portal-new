@@ -67,15 +67,22 @@ router.post('/', async (req, res) => {
 
 // PUT /api/jobs/:id - Update job (admin, invoice fields)
 router.put('/:id', async (req, res) => {
-  const { invoice_raised, invoice_amount, payment_received, status, type_of_job, job_id, job_received_date } = req.body;
+  const { invoice_raised, invoice_amount, payment_received, status, type_of_job, job_id, job_received_date, client_name, job_description } = req.body;
   console.log("Update request body:", req.body);
+  console.log("client_name value:", client_name);
+  console.log("job_description value:", job_description);
   try {
-    const params = [invoice_raised, invoice_amount, payment_received, status, type_of_job, job_id, job_received_date, req.params.id];
+    const params = [invoice_raised, invoice_amount, payment_received, status, type_of_job, job_id, job_received_date, client_name, job_description, req.params.id];
     console.log("SQL update params:", params);
-    await db.query(
-      'UPDATE job SET invoice_raised = ?, invoice_amount = ?, payment_received = ?, status = ?, type_of_job = ?, job_id = ?, job_received_date = ? WHERE id = ?',
+    
+    const [result] = await db.query(
+      'UPDATE job SET invoice_raised = ?, invoice_amount = ?, payment_received = ?, status = ?, type_of_job = ?, job_id = ?, job_received_date = ?, client_name = ?, job_description = ? WHERE id = ?',
       params
     );
+    
+    console.log("Update result:", result);
+    console.log("Rows affected:", result.affectedRows);
+    
     res.json({ success: true });
   } catch (err) {
     console.error("Update error:", err);
